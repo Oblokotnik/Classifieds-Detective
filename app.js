@@ -20,6 +20,7 @@ let isModerator = false;
 let allListings = [];
 let moderators = [];
 let allPosts = [];
+let isGuestMode = false;
 
 function getSafeEmailId(email) {
     return email.replace(/\./g, ',');
@@ -47,8 +48,56 @@ function showTab(tab) {
     }
 }
 
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeToggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+}
+
+function showWelcomeModal() {
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+    if (!hasSeenWelcome) {
+        document.getElementById('welcomeModal').classList.remove('hidden');
+    }
+}
+
+function closeWelcomeModal() {
+    document.getElementById('welcomeModal').classList.add('hidden');
+    localStorage.setItem('hasSeenWelcome', 'true');
+}
+
+function showAuthScreen() {
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+}
+
+function closeAuthAndBrowse() {
+    isGuestMode = true;
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    updateUIForGuest();
+}
+
+function updateUIForGuest() {
+    document.getElementById('authBtn').classList.add('hidden');
+    document.getElementById('logoutBtn').classList.remove('hidden');
+    document.getElementById('userEmail').classList.add('hidden');
+    document.getElementById('newsBtn').classList.add('hidden');
+    document.getElementById('addListingBtn').classList.add('hidden');
+    document.getElementById('moderatorsBtn').classList.add('hidden');
+}
+
 auth.onAuthStateChanged((user) => {
     if (user) {
+        isGuestMode = false;
         currentUser = user;
         isAdmin = user.email === ADMIN_EMAIL;
         isModerator = checkModeratorRights(user.email);
@@ -56,10 +105,16 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('authScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('userEmail').textContent = user.email;
+        document.getElementById('userEmail').classList.remove('hidden');
+        document.getElementById('authBtn').classList.add('hidden');
+        document.getElementById('logoutBtn').classList.remove('hidden');
         
         if (isModerator) {
             document.getElementById('addListingBtn').classList.remove('hidden');
             document.getElementById('addPostSection').classList.remove('hidden');
+            document.getElementById('newsBtn').classList.remove('hidden');
+        } else {
+            document.getElementById('newsBtn').classList.remove('hidden');
         }
         
         if (isAdmin) {
@@ -70,11 +125,13 @@ auth.onAuthStateChanged((user) => {
         loadModerators();
         loadNews();
     } else {
-        currentUser = null;
-        isAdmin = false;
-        isModerator = false;
-        document.getElementById('authScreen').classList.remove('hidden');
-        document.getElementById('mainApp').classList.add('hidden');
+        if (!isGuestMode) {
+            currentUser = null;
+            isAdmin = false;
+            isModerator = false;
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
     }
 });
 
@@ -113,7 +170,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 });
 
 async function logout() {
-    await auth.signOut();
+    if (isGuestMode) {
+        isGuestMode = false;
+        document.getElementById('mainApp').classList.add('hidden');
+        document.getElementById('authScreen').classList.remove('hidden');
+        document.getElementById('authBtn').classList.remove('hidden');
+        document.getElementById('logoutBtn').classList.add('hidden');
+    } else {
+        await auth.signOut();
+    }
 }
 
 function getErrorMessage(code) {
@@ -159,6 +224,7 @@ function loadModerators() {
             if (isModerator) {
                 document.getElementById('addListingBtn').classList.remove('hidden');
                 document.getElementById('addPostSection').classList.remove('hidden');
+                document.getElementById('newsBtn').classList.remove('hidden');
             }
         }
     });
@@ -202,7 +268,7 @@ function displayListings(listings) {
     const container = document.getElementById('listingsContainer');
     
     if (listings.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1/-1;">Нет объявлений в этой категории</p>';
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); grid-column: 1/-1;">Нет объявлений в этой категории</p>';
         return;
     }
     
@@ -321,7 +387,7 @@ function updateModeratorsList() {
     const mods = moderators.filter(m => m !== ADMIN_EMAIL);
     
     if (mods.length === 0) {
-        list.innerHTML = '<p style="color: #7f8c8d;">Нет дополнительных модераторов</p>';
+        list.innerHTML = '<p style="color: var(--text-secondary);">Нет дополнительных модераторов</p>';
         return;
     }
     
@@ -384,6 +450,17 @@ async function removeModerator(email) {
 }
 
 function showNewsModal() {
+    if (isGuestMode || !currentUser) {
+        document.getElementById('newsGuestMessage').classList.remove('hidden');
+        document.getElementById('newsFeedContainer').innerHTML = '';
+        document.getElementById('addPostSection').classList.add('hidden');
+    } else {
+        document.getElementById('newsGuestMessage').classList.add('hidden');
+        if (isModerator) {
+            document.getElementById('addPostSection').classList.remove('hidden');
+        }
+        renderNews();
+    }
     document.getElementById('newsModal').classList.remove('hidden');
 }
 
@@ -395,7 +472,7 @@ function renderNews() {
     const container = document.getElementById('newsFeedContainer');
     
     if (allPosts.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Пока нет новостей</p>';
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Пока нет новостей</p>';
         return;
     }
     
@@ -448,6 +525,14 @@ async function deletePost(postId) {
     } catch (error) {
         alert('Ошибка при удалении: ' + error.message);
     }
+}
+
+function showAuthorsModal() {
+    document.getElementById('authorsModal').classList.remove('hidden');
+}
+
+function closeAuthorsModal() {
+    document.getElementById('authorsModal').classList.add('hidden');
 }
 
 function getCategoryName(category) {
@@ -504,3 +589,10 @@ document.getElementById('moderatorsModal').addEventListener('click', (e) => {
 document.getElementById('newsModal').addEventListener('click', (e) => {
     if (e.target.id === 'newsModal') closeNewsModal();
 });
+
+document.getElementById('authorsModal').addEventListener('click', (e) => {
+    if (e.target.id === 'authorsModal') closeAuthorsModal();
+});
+
+loadTheme();
+showWelcomeModal();
