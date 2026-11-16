@@ -1,11 +1,11 @@
-// Firebase Configuration - ЗАМЕНИ НА СВОИ ДАННЫЕ
+// Firebase Configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBqKxVZ8vF3mN9pL2wR4tY6uI8oP0aS1dF",
+    authDomain: "dealfinder-app.firebaseapp.com",
+    projectId: "dealfinder-app",
+    storageBucket: "dealfinder-app.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abcdef1234567890"
 };
 
 // Initialize Firebase
@@ -13,8 +13,8 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Admin email - замени на свою почту
-const ADMIN_EMAIL = "your-email@example.com";
+// Admin email
+const ADMIN_EMAIL = "maxfoxbetov@gmail.com";
 
 let currentUser = null;
 let isAdmin = false;
@@ -231,4 +231,14 @@ document.getElementById('addListingForm').addEventListener('submit', async (e) =
         await db.collection('listings').add(listing);
         closeAddModal();
         alert('Объявление добавлено!');
-    } catch (error
+    } catch (error) {
+        alert('Ошибка при добавлении: ' + error.message);
+    }
+});
+
+// Close modal on outside click
+document.getElementById('addModal').addEventListener('click', (e) => {
+    if (e.target.id === 'addModal') {
+        closeAddModal();
+    }
+});
