@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealFinder - Найди лучшие предложения</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="authScreen" class="screen">
+        <div class="auth-container">
+            <h1>DealFinder</h1>
+            <p>Найди лучшие предложения специально для тебя</p>
+            
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="showTab('login')">Вход</button>
+                <button class="tab-btn" onclick="showTab('register')">Регистрация</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Пароль" required>
+                <button type="submit" class="btn-primary">Войти</button>
+            </form>
+
+            <form id="registerForm" class="auth-form hidden">
+                <input type="email" id="registerEmail" placeholder="Email" required>
+                <input type="password" id="registerPassword" placeholder="Пароль (минимум 6 символов)" required>
+                <button type="submit" class="btn-primary">Зарегистрироваться</button>
+            </form>
+
+            <div id="authError" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="screen hidden">
+        <header>
+            <div class="header-left">
+                <h1>DealFinder</h1>
+            </div>
+            <div class="header-right">
+                <span id="userEmail"></span>
+                <button id="addListingBtn" class="btn-add hidden" onclick="showAddModal()">+ Добавить объявление</button>
+                <button onclick="logout()" class="btn-secondary">Выйти</button>
+            </div>
+        </header>
+
+        <div class="info-banner">
+            <strong>Как читать статусы:</strong>
+            <span class="status-indicator status-normal"><span class="dot"></span> Обычное предложение</span>
+            <span class="status-indicator status-suspicious"><span class="dot"></span> Сомнительное</span>
+            <span class="status-indicator status-strange"><span class="dot"></span> Странное предложение</span>
+        </div>
+
+        <div class="filters">
+            <select id="categoryFilter" onchange="filterListings()">
+                <option value="">Все категории</option>
+                <option value="gaming-consoles">Игровые приставки</option>
+                <option value="portable-pc">Портативные компьютеры</option>
+                <option value="pc-components">Комплектующие для ПК</option>
+                <option value="phones">Телефоны</option>
+                <option value="games">Покупка игр</option>
+            </select>
+            
+            <select id="priceFilter" onchange="filterListings()">
+                <option value="">Любая цена</option>
+                <option value="0-5000">До 5 000 ₽</option>
+                <option value="5000-15000">5 000 - 15 000 ₽</option>
+                <option value="15000-30000">15 000 - 30 000 ₽</option>
+                <option value="30000+">От 30 000 ₽</option>
+            </select>
+
+            <select id="statusFilter" onchange="filterListings()">
+                <option value="">Все статусы</option>
+                <option value="normal">Обычное предложение</option>
+                <option value="suspicious">Сомнительное</option>
+                <option value="strange">Странное предложение</option>
+            </select>
+        </div>
+
+        <div id="listingsContainer" class="listings-grid">
+            <!-- Listings will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Add Listing Modal -->
+    <div id="addModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Добавить объявление</h2>
+            <form id="addListingForm">
+                <input type="text" id="listingTitle" placeholder="Название товара" required>
+                <textarea id="listingDescription" placeholder="Описание" required></textarea>
+                <input type="number" id="listingPrice" placeholder="Цена (₽)" required min="0">
+                
+                <label>Категория:</label>
+                <select id="listingCategory" required>
+                    <option value="gaming-consoles">Игровые приставки</option>
+                    <option value="portable-pc">Портативные компьютеры</option>
+                    <option value="pc-components">Комплектующие для ПК</option>
+                    <option value="phones">Телефоны</option>
+                    <option value="games">Покупка игр</option>
+                </select>
+
+                <label>Статус предложения:</label>
+                <select id="listingStatus" required>
+                    <option value="normal">Обычное предложение</option>
+                    <option value="suspicious">Сомнительное</option>
+                    <option value="strange">Странное предложение</option>
+                </select>
+
+                <input type="url" id="listingLink" placeholder="Ссылка на Авито/другой источник" required>
+                
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-primary">Добавить</button>
+                    <button type="button" class="btn-secondary" onclick="closeAddModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <script src="app.js"></script>
+</body>
+</html>
