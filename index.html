@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DealFinder - Найди лучшие предложения</title>
+    <title>ClassifiedsDetective - Найди лучшие предложения</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Auth Screen -->
     <div id="authScreen" class="screen">
         <div class="auth-container">
-            <h1>DealFinder</h1>
+            <h1>ClassifiedsDetective</h1>
             <p>Найди лучшие предложения специально для тебя</p>
             
             <div class="auth-tabs">
@@ -38,11 +38,12 @@
     <div id="mainApp" class="screen hidden">
         <header>
             <div class="header-left">
-                <h1>DealFinder</h1>
+                <h1>ClassifiedsDetective</h1>
             </div>
             <div class="header-right">
                 <span id="userEmail"></span>
-                <button id="addListingBtn" class="btn-add hidden" onclick="showAddModal()">+ Добавить объявление</button>
+                <button id="addListingBtn" class="btn-add hidden" onclick="showAddModal()">+ Добавить</button>
+                <button id="moderatorsBtn" class="btn-moderators hidden" onclick="showModeratorsModal()">👥 Модераторы</button>
                 <button onclick="logout()" class="btn-secondary">Выйти</button>
             </div>
         </header>
@@ -117,6 +118,42 @@
                     <button type="button" class="btn-secondary" onclick="closeAddModal()">Отмена</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Listing Detail Modal -->
+    <div id="detailModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <h2 id="detailTitle"></h2>
+            <span id="detailCategory" class="listing-category"></span>
+            <div class="detail-status">
+                <span id="detailStatusDot" class="dot"></span>
+                <span id="detailStatusText"></span>
+            </div>
+            <p id="detailDescription" class="detail-description"></p>
+            <div id="detailPrice" class="detail-price"></div>
+            <a id="detailLink" href="#" target="_blank" class="listing-link">Перейти к объявлению</a>
+            <button onclick="closeDetailModal()" class="btn-secondary" style="margin-top: 15px;">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Moderators Modal -->
+    <div id="moderatorsModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Управление модераторами</h2>
+            
+            <div class="add-moderator-section">
+                <h3>Добавить модератора</h3>
+                <input type="email" id="moderatorEmail" placeholder="Email пользователя">
+                <button onclick="addModerator()" class="btn-primary">Дать права</button>
+            </div>
+
+            <div class="moderators-list">
+                <h3>Текущие модераторы</h3>
+                <div id="moderatorsList"></div>
+            </div>
+
+            <button onclick="closeModeratorsModal()" class="btn-secondary" style="margin-top: 15px;">Закрыть</button>
         </div>
     </div>
 
