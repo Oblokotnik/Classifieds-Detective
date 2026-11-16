@@ -21,16 +21,15 @@ let currentUser = null;
 let isAdmin = false;
 let isModerator = false;
 let allListings = [];
-let moderators = []; // Список email-ов модераторов (включая админа)
+let moderators = [];
+let allPosts = []; // Для новостей
 
 // --- Helper Functions ---
 
-// Заменяем точки на запятые для использования в качестве ID документа в Firestore
 function getSafeEmailId(email) {
     return email.replace(/\./g, ',');
 }
 
-// Проверка прав модератора по локальному списку
 function checkModeratorRights(email) {
     return moderators.includes(email);
 }
@@ -67,9 +66,9 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('userEmail').textContent = user.email;
         
-        // Показываем кнопки только если есть права
         if (isModerator) {
             document.getElementById('addListingBtn').classList.remove('hidden');
+            document.getElementById('addPostSection').classList.remove('hidden');
         }
         
         if (isAdmin) {
@@ -78,6 +77,7 @@ auth.onAuthStateChanged((user) => {
         
         loadListings();
         loadModerators();
+        loadNews();
     } else {
         currentUser = null;
         isAdmin = false;
@@ -156,24 +156,32 @@ function loadListings() {
 
 function loadModerators() {
     db.collection('moderators').onSnapshot((snapshot) => {
-        // Админ всегда модератор
         moderators = [ADMIN_EMAIL]; 
         
         snapshot.forEach((doc) => {
             const data = doc.data();
-            // Добавляем в список, если его там еще нет
             if (!moderators.includes(data.email)) {
                 moderators.push(data.email);
             }
         });
         
-        // Обновляем статус текущего пользователя, если он вошел
         if (currentUser) {
             isModerator = checkModeratorRights(currentUser.email);
             if (isModerator) {
                 document.getElementById('addListingBtn').classList.remove('hidden');
+                document.getElementById('addPostSection').classList.remove('hidden');
             }
         }
+    });
+}
+
+function loadNews() {
+    db.collection('posts').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+        allPosts = [];
+        snapshot.forEach((doc) => {
+            allPosts.push({ id: doc.id, ...doc.data() });
+        });
+        renderNews();
     });
 }
 
@@ -186,13 +194,8 @@ function filterListings() {
     
     let filtered = allListings;
     
-    if (categoryFilter) {
-        filtered = filtered.filter(l => l.category === categoryFilter);
-    }
-    
-    if (statusFilter) {
-        filtered = filtered.filter(l => l.status === statusFilter);
-    }
+    if (categoryFilter) filtered = filtered.filter(l => l.category === categoryFilter);
+    if (statusFilter) filtered = filtered.filter(l => l.status === statusFilter);
     
     if (priceFilter) {
         filtered = filtered.filter(l => {
@@ -217,7 +220,6 @@ function displayListings(listings) {
     }
     
     container.innerHTML = listings.map(listing => {
-        // Обрезаем описание до 30 символов
         const shortDesc = listing.description.length > 30 
             ? listing.description.substring(0, 30) + '...' 
             : listing.description;
@@ -271,7 +273,7 @@ function closeAddModal() {
     document.getElementById('addListingForm').reset();
 }
 
-// --- Actions (Add/Delete) ---
+// --- Actions (Add/Delete Listings) ---
 
 async function deleteListing(listingId) {
     if (!isModerator) {
@@ -283,7 +285,6 @@ async function deleteListing(listingId) {
     
     try {
         await db.collection('listings').doc(listingId).delete();
-        // Уведомление не обязательно, так как onSnapshot обновит список автоматически
     } catch (error) {
         alert('Ошибка при удалении: ' + error.message);
     }
@@ -336,7 +337,6 @@ function closeModeratorsModal() {
 
 function updateModeratorsList() {
     const list = document.getElementById('moderatorsList');
-    // Фильтруем админа из списка, чтобы не показывать кнопку "удалить" самому себе
     const mods = moderators.filter(m => m !== ADMIN_EMAIL);
     
     if (mods.length === 0) {
@@ -360,7 +360,6 @@ async function addModerator() {
         return;
     }
 
-    // ВАЖНО: Заменяем точки на запятые для ID документа
     const safeId = emailInput.replace(/\./g, ','); 
     
     if (emailInput === ADMIN_EMAIL) {
@@ -374,9 +373,8 @@ async function addModerator() {
     }
     
     try {
-        // Используем safeId как ID документа
         await db.collection('moderators').doc(safeId).set({
-            email: emailInput, // Настоящий email храним внутри поля
+            email: emailInput,
             addedAt: firebase.firestore.FieldValue.serverTimestamp(),
             addedBy: ADMIN_EMAIL
         });
@@ -393,7 +391,6 @@ async function addModerator() {
 async function removeModerator(email) {
     if (!confirm(`Убрать права модератора у ${email}?`)) return;
     
-    // Снова заменяем точки на запятые для поиска ID
     const safeId = email.replace(/\./g, ',');
     
     try {
@@ -402,6 +399,75 @@ async function removeModerator(email) {
         updateModeratorsList();
     } catch (error) {
         alert('Ошибка: ' + error.message);
+    }
+}
+
+// --- News Feed Functions ---
+
+function showNewsModal() {
+    document.getElementById('newsModal').classList.remove('hidden');
+}
+
+function closeNewsModal() {
+    document.getElementById('newsModal').classList.add('hidden');
+}
+
+function renderNews() {
+    const container = document.getElementById('newsFeedContainer');
+    
+    if (allPosts.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Пока нет новостей</p>';
+        return;
+    }
+    
+    container.innerHTML = allPosts.map(post => {
+        const canDelete = isModerator;
+        const date = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString('ru-RU') : '';
+        
+        return `
+        <div class="news-post">
+            ${canDelete ? `<button class="news-delete-btn" onclick="deletePost('${post.id}')">×</button>` : ''}
+            <div class="news-author">${escapeHtml(post.authorEmail || 'Admin')}</div>
+            <div class="news-text">${escapeHtml(post.content)}</div>
+            <div class="news-date">${date}</div>
+        </div>
+    `}).join('');
+}
+
+async function addPost() {
+    const content = document.getElementById('postContent').value.trim();
+    
+    if (!content) {
+        alert('Введите текст новости');
+        return;
+    }
+    
+    if (!isModerator) {
+        alert('У вас нет прав для публикации');
+        return;
+    }
+    
+    try {
+        await db.collection('posts').add({
+            content: content,
+            authorEmail: currentUser.email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        document.getElementById('postContent').value = '';
+    } catch (error) {
+        alert('Ошибка при публикации: ' + error.message);
+    }
+}
+
+async function deletePost(postId) {
+    if (!isModerator) return;
+    if (!confirm('Удалить этот пост?')) return;
+    
+    try {
+        await db.collection('posts').doc(postId).delete();
+    } catch (error) {
+        alert('Ошибка при удалении: ' + error.message);
     }
 }
 
@@ -457,4 +523,8 @@ document.getElementById('detailModal').addEventListener('click', (e) => {
 
 document.getElementById('moderatorsModal').addEventListener('click', (e) => {
     if (e.target.id === 'moderatorsModal') closeModeratorsModal();
+});
+
+document.getElementById('newsModal').addEventListener('click', (e) => {
+    if (e.target.id === 'newsModal') closeNewsModal();
 });
