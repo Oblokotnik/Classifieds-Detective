@@ -1,11 +1,12 @@
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyBqKxVZ8vF3mN9pL2wR4tY6uI8oP0aS1dF",
-    authDomain: "dealfinder-app.firebaseapp.com",
-    projectId: "dealfinder-app",
-    storageBucket: "dealfinder-app.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef1234567890"
+    apiKey: "AIzaSyD2O2iYQDk9qGB1jKW121Hru3MiC3GGW98",
+    authDomain: "classifieds-detective.firebaseapp.com",
+    projectId: "classifieds-detective",
+    storageBucket: "classifieds-detective.firebasestorage.app",
+    messagingSenderId: "114298083065",
+    appId: "1:114298083065:web:253ca0ff6cc244812af428",
+    measurementId: "G-K9K5QVXMVC"
 };
 
 // Initialize Firebase
@@ -67,12 +68,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('authError');
+    
+    errorDiv.textContent = 'Входим...';
     
     try {
         await auth.signInWithEmailAndPassword(email, password);
-        document.getElementById('authError').textContent = '';
+        errorDiv.textContent = '';
     } catch (error) {
-        document.getElementById('authError').textContent = getErrorMessage(error.code);
+        console.error('Login error:', error);
+        errorDiv.textContent = getErrorMessage(error.code);
     }
 });
 
@@ -81,12 +86,16 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     e.preventDefault();
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
+    const errorDiv = document.getElementById('authError');
+    
+    errorDiv.textContent = 'Регистрируем...';
     
     try {
         await auth.createUserWithEmailAndPassword(email, password);
-        document.getElementById('authError').textContent = '';
+        errorDiv.textContent = '';
     } catch (error) {
-        document.getElementById('authError').textContent = getErrorMessage(error.code);
+        console.error('Register error:', error);
+        errorDiv.textContent = getErrorMessage(error.code);
     }
 });
 
@@ -100,14 +109,14 @@ function getErrorMessage(code) {
     const errors = {
         'auth/email-already-in-use': 'Этот email уже зарегистрирован',
         'auth/invalid-email': 'Неверный формат email',
-        'auth/operation-not-allowed': 'Регистрация отключена',
+        'auth/operation-not-allowed': 'Регистрация отключена. Включите Email/Password в Firebase Console → Authentication → Sign-in method',
         'auth/weak-password': 'Пароль слишком слабый (минимум 6 символов)',
         'auth/user-disabled': 'Аккаунт заблокирован',
-        'auth/user-not-found': 'Пользователь не найден',
+        'auth/user-not-found': 'Пользователь не найден. Сначала зарегистрируйтесь',
         'auth/wrong-password': 'Неверный пароль',
         'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже'
     };
-    return errors[code] || 'Произошла ошибка. Попробуйте снова.';
+    return errors[code] || 'Ошибка: ' + code;
 }
 
 // Load listings with real-time updates
@@ -118,6 +127,9 @@ function loadListings() {
             allListings.push({ id: doc.id, ...doc.data() });
         });
         filterListings();
+    }, (error) => {
+        console.error('Firestore error:', error);
+        alert('Ошибка загрузки данных: ' + error.message);
     });
 }
 
@@ -232,6 +244,7 @@ document.getElementById('addListingForm').addEventListener('submit', async (e) =
         closeAddModal();
         alert('Объявление добавлено!');
     } catch (error) {
+        console.error('Add listing error:', error);
         alert('Ошибка при добавлении: ' + error.message);
     }
 });
