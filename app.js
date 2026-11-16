@@ -1,4 +1,3 @@
-// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD2O2iYQDk9qGB1jKW121Hru3MiC3GGW98",
     authDomain: "classifieds-detective.firebaseapp.com",
@@ -9,12 +8,10 @@ const firebaseConfig = {
     measurementId: "G-K9K5QVXMVC"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Admin email
 const ADMIN_EMAIL = "maxfoxbetov@gmail.com";
 
 let currentUser = null;
@@ -22,9 +19,7 @@ let isAdmin = false;
 let isModerator = false;
 let allListings = [];
 let moderators = [];
-let allPosts = []; // Для новостей
-
-// --- Helper Functions ---
+let allPosts = [];
 
 function getSafeEmailId(email) {
     return email.replace(/\./g, ',');
@@ -33,8 +28,6 @@ function getSafeEmailId(email) {
 function checkModeratorRights(email) {
     return moderators.includes(email);
 }
-
-// --- UI & Navigation ---
 
 function showTab(tab) {
     const loginForm = document.getElementById('loginForm');
@@ -53,8 +46,6 @@ function showTab(tab) {
         tabs[1].classList.add('active');
     }
 }
-
-// --- Authentication ---
 
 auth.onAuthStateChanged((user) => {
     if (user) {
@@ -139,8 +130,6 @@ function getErrorMessage(code) {
     return errors[code] || 'Ошибка: ' + code;
 }
 
-// --- Data Loading ---
-
 function loadListings() {
     db.collection('listings').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
         allListings = [];
@@ -184,8 +173,6 @@ function loadNews() {
         renderNews();
     });
 }
-
-// --- Filtering & Display ---
 
 function filterListings() {
     const categoryFilter = document.getElementById('categoryFilter').value;
@@ -239,8 +226,6 @@ function displayListings(listings) {
     `}).join('');
 }
 
-// --- Modals & Details ---
-
 function showDetail(listingId) {
     const listing = allListings.find(l => l.id === listingId);
     if (!listing) return;
@@ -272,8 +257,6 @@ function closeAddModal() {
     document.getElementById('addModal').classList.add('hidden');
     document.getElementById('addListingForm').reset();
 }
-
-// --- Actions (Add/Delete Listings) ---
 
 async function deleteListing(listingId) {
     if (!isModerator) {
@@ -318,8 +301,6 @@ document.getElementById('addListingForm').addEventListener('submit', async (e) =
         alert('Ошибка при добавлении: ' + error.message);
     }
 });
-
-// --- Moderators Management ---
 
 function showModeratorsModal() {
     if (!isAdmin) {
@@ -402,8 +383,6 @@ async function removeModerator(email) {
     }
 }
 
-// --- News Feed Functions ---
-
 function showNewsModal() {
     document.getElementById('newsModal').classList.remove('hidden');
 }
@@ -471,8 +450,6 @@ async function deletePost(postId) {
     }
 }
 
-// --- Helpers ---
-
 function getCategoryName(category) {
     const categories = {
         'gaming-consoles': 'Игровые приставки',
@@ -512,7 +489,6 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Close modals on outside click
 document.getElementById('addModal').addEventListener('click', (e) => {
     if (e.target.id === 'addModal') closeAddModal();
 });
