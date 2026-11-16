@@ -1,3 +1,25 @@
+:root {
+    --bg-color: #f5f5f5;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --text-secondary: #7f8c8d;
+    --border-color: #dddddd;
+    --header-bg: #ffffff;
+    --input-bg: #ffffff;
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a2e;
+    --card-bg: #16213e;
+    --text-color: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --border-color: #2a2a4a;
+    --header-bg: #0f3460;
+    --input-bg: #1a1a2e;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,8 +28,9 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: #f5f5f5;
-    color: #333;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background 0.3s, color 0.3s;
 }
 
 .hidden {
@@ -22,20 +45,20 @@ body {
     max-width: 400px;
     margin: 100px auto;
     padding: 40px;
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px var(--shadow);
 }
 
 .auth-container h1 {
     text-align: center;
     margin-bottom: 10px;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 .auth-container > p {
     text-align: center;
-    color: #7f8c8d;
+    color: var(--text-secondary);
     margin-bottom: 30px;
 }
 
@@ -49,11 +72,12 @@ body {
     flex: 1;
     padding: 10px;
     border: none;
-    background: #ecf0f1;
+    background: var(--border-color);
     cursor: pointer;
     border-radius: 6px;
     font-size: 14px;
     transition: all 0.3s;
+    color: var(--text-color);
 }
 
 .tab-btn.active {
@@ -69,9 +93,11 @@ body {
 
 .auth-form input {
     padding: 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
+    background: var(--input-bg);
+    color: var(--text-color);
 }
 
 .btn-primary {
@@ -113,28 +139,57 @@ body {
 }
 
 header {
-    background: white;
+    background: var(--header-bg);
     padding: 20px 40px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px var(--shadow);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background 0.3s;
 }
 
 .header-left h1 {
-    color: #2c3e50;
+    color: var(--text-color);
     font-size: 24px;
 }
 
 .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 #userEmail {
-    color: #7f8c8d;
+    color: var(--text-secondary);
     font-size: 14px;
+}
+
+.btn-icon {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s;
+}
+
+.btn-authors {
+    padding: 10px 16px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-authors:hover {
+    color: var(--text-color);
+    border-color: var(--text-color);
 }
 
 .btn-add {
@@ -189,20 +244,22 @@ header {
     text-align: right;
     padding: 5px 40px;
     font-size: 10px;
-    color: #bdc3c7;
-    background: white;
+    color: var(--text-secondary);
+    background: var(--header-bg);
+    transition: background 0.3s;
 }
 
 .info-banner {
-    background: white;
+    background: var(--card-bg);
     padding: 15px 40px;
     margin: 20px 40px;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px var(--shadow);
     display: flex;
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
+    transition: background 0.3s;
 }
 
 .status-indicator {
@@ -241,10 +298,11 @@ header {
 
 .filters select {
     padding: 10px 15px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
-    background: white;
+    background: var(--input-bg);
+    color: var(--text-color);
     cursor: pointer;
     min-width: 200px;
 }
@@ -257,18 +315,18 @@ header {
 }
 
 .listing-card {
-    background: white;
+    background: var(--card-bg);
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 10px var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
     position: relative;
     cursor: pointer;
 }
 
 .listing-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 5px 20px var(--shadow);
 }
 
 .listing-status {
@@ -321,10 +379,10 @@ header {
 .listing-category {
     display: inline-block;
     padding: 4px 10px;
-    background: #ecf0f1;
+    background: var(--border-color);
     border-radius: 4px;
     font-size: 12px;
-    color: #7f8c8d;
+    color: var(--text-secondary);
     margin-bottom: 10px;
 }
 
@@ -332,12 +390,12 @@ header {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 10px;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 .listing-description {
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--text-secondary);
     margin-bottom: 15px;
     line-height: 1.5;
 }
@@ -374,13 +432,14 @@ header {
 }
 
 .modal-content {
-    background: white;
+    background: var(--card-bg);
     padding: 30px;
     border-radius: 12px;
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
+    color: var(--text-color);
 }
 
 .modal-large {
@@ -389,7 +448,7 @@ header {
 
 .modal-content h2 {
     margin-bottom: 20px;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 #addListingForm {
@@ -402,9 +461,11 @@ header {
 #addListingForm textarea,
 #addListingForm select {
     padding: 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
+    background: var(--input-bg);
+    color: var(--text-color);
 }
 
 #addListingForm textarea {
@@ -414,7 +475,7 @@ header {
 
 #addListingForm label {
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-color);
     font-size: 14px;
 }
 
@@ -427,7 +488,7 @@ header {
 .detail-description {
     font-size: 16px;
     line-height: 1.6;
-    color: #555;
+    color: var(--text-secondary);
     margin: 20px 0;
 }
 
@@ -449,26 +510,28 @@ header {
 .add-moderator-section {
     margin-bottom: 25px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .add-moderator-section h3 {
     margin-bottom: 15px;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 .add-moderator-section input {
     width: 100%;
     padding: 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
     margin-bottom: 10px;
+    background: var(--input-bg);
+    color: var(--text-color);
 }
 
 .moderators-list h3 {
     margin-bottom: 15px;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 .moderator-item {
@@ -476,14 +539,14 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    background: #f8f9fa;
+    background: var(--bg-color);
     border-radius: 6px;
     margin-bottom: 10px;
 }
 
 .moderator-email {
     font-size: 14px;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 .remove-moderator-btn {
@@ -502,7 +565,7 @@ header {
 }
 
 .news-post {
-    background: #f8f9fa;
+    background: var(--bg-color);
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 15px;
@@ -511,7 +574,7 @@ header {
 
 .news-author {
     font-size: 12px;
-    color: #7f8c8d;
+    color: var(--text-secondary);
     margin-bottom: 5px;
     font-weight: 600;
 }
@@ -519,13 +582,13 @@ header {
 .news-text {
     font-size: 14px;
     line-height: 1.5;
-    color: #2c3e50;
+    color: var(--text-color);
     white-space: pre-wrap;
 }
 
 .news-date {
     font-size: 11px;
-    color: #95a5a6;
+    color: var(--text-secondary);
     margin-top: 8px;
 }
 
@@ -543,6 +606,28 @@ header {
 
 .news-delete-btn:hover {
     color: #c0392b;
+}
+
+.author-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.author-role {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.author-name {
+    font-size: 15px;
+    color: var(--text-color);
+    font-weight: 700;
 }
 
 @media (max-width: 768px) {
