@@ -74,6 +74,52 @@ function closeWelcomeModal() {
     localStorage.setItem('hasSeenWelcome', 'true');
 }
 
+function updateUI() {
+    const userEmailEl = document.getElementById('userEmail');
+    const authBtn = document.getElementById('authBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const newsBtn = document.getElementById('newsBtn');
+    const addListingBtn = document.getElementById('addListingBtn');
+    const moderatorsBtn = document.getElementById('moderatorsBtn');
+    const addPostSection = document.getElementById('addPostSection');
+
+    userEmailEl.classList.add('hidden');
+    authBtn.classList.add('hidden');
+    logoutBtn.classList.add('hidden');
+    newsBtn.classList.add('hidden');
+    addListingBtn.classList.add('hidden');
+    moderatorsBtn.classList.add('hidden');
+    addPostSection.classList.add('hidden');
+
+    if (isGuestMode) {
+        logoutBtn.classList.remove('hidden');
+        logoutBtn.textContent = 'Войти / Регистрация';
+        return;
+    }
+
+    if (currentUser) {
+        userEmailEl.textContent = currentUser.email;
+        userEmailEl.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden');
+        logoutBtn.textContent = 'Выйти';
+
+        if (isAdmin || isModerator) {
+            newsBtn.classList.remove('hidden');
+            addPostSection.classList.remove('hidden');
+        }
+
+        if (isModerator) {
+            addListingBtn.classList.remove('hidden');
+        }
+
+        if (isAdmin) {
+            moderatorsBtn.classList.remove('hidden');
+        }
+    } else {
+        authBtn.classList.remove('hidden');
+    }
+}
+
 function showAuthScreen() {
     document.getElementById('authScreen').classList.remove('hidden');
     document.getElementById('mainApp').classList.add('hidden');
@@ -81,46 +127,26 @@ function showAuthScreen() {
 
 function closeAuthAndBrowse() {
     isGuestMode = true;
+    currentUser = null;
+    isAdmin = false;
+    isModerator = false;
     document.getElementById('authScreen').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
-    updateUIForGuest();
-}
-
-function updateUIForGuest() {
-    document.getElementById('authBtn').classList.add('hidden');
-    document.getElementById('logoutBtn').classList.remove('hidden');
-    document.getElementById('userEmail').classList.add('hidden');
-    document.getElementById('newsBtn').classList.add('hidden');
-    document.getElementById('addListingBtn').classList.add('hidden');
-    document.getElementById('moderatorsBtn').classList.add('hidden');
+    updateUI();
 }
 
 auth.onAuthStateChanged((user) => {
     if (user) {
-        isGuestMode = false;
+        if (isGuestMode) return;
+
         currentUser = user;
         isAdmin = user.email === ADMIN_EMAIL;
         isModerator = checkModeratorRights(user.email);
         
         document.getElementById('authScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
-        document.getElementById('userEmail').textContent = user.email;
-        document.getElementById('userEmail').classList.remove('hidden');
-        document.getElementById('authBtn').classList.add('hidden');
-        document.getElementById('logoutBtn').classList.remove('hidden');
         
-        if (isModerator) {
-            document.getElementById('addListingBtn').classList.remove('hidden');
-            document.getElementById('addPostSection').classList.remove('hidden');
-            document.getElementById('newsBtn').classList.remove('hidden');
-        } else {
-            document.getElementById('newsBtn').classList.remove('hidden');
-        }
-        
-        if (isAdmin) {
-            document.getElementById('moderatorsBtn').classList.remove('hidden');
-        }
-        
+        updateUI();
         loadListings();
         loadModerators();
         loadNews();
@@ -172,10 +198,12 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 async function logout() {
     if (isGuestMode) {
         isGuestMode = false;
+        currentUser = null;
+        isAdmin = false;
+        isModerator = false;
         document.getElementById('mainApp').classList.add('hidden');
         document.getElementById('authScreen').classList.remove('hidden');
-        document.getElementById('authBtn').classList.remove('hidden');
-        document.getElementById('logoutBtn').classList.add('hidden');
+        updateUI();
     } else {
         await auth.signOut();
     }
@@ -219,13 +247,9 @@ function loadModerators() {
             }
         });
         
-        if (currentUser) {
+        if (currentUser && !isGuestMode) {
             isModerator = checkModeratorRights(currentUser.email);
-            if (isModerator) {
-                document.getElementById('addListingBtn').classList.remove('hidden');
-                document.getElementById('addPostSection').classList.remove('hidden');
-                document.getElementById('newsBtn').classList.remove('hidden');
-            }
+            updateUI();
         }
     });
 }
@@ -277,7 +301,7 @@ function displayListings(listings) {
             ? listing.description.substring(0, 30) + '...' 
             : listing.description;
         
-        const canDelete = isModerator;
+        const canDelete = isModerator && !isGuestMode;
         
         return `
         <div class="listing-card" onclick="showDetail('${listing.id}')">
@@ -325,7 +349,7 @@ function closeAddModal() {
 }
 
 async function deleteListing(listingId) {
-    if (!isModerator) {
+    if (!isModerator || isGuestMode) {
         alert('У вас нет прав для удаления');
         return;
     }
@@ -342,7 +366,7 @@ async function deleteListing(listingId) {
 document.getElementById('addListingForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    if (!isModerator) {
+    if (!isModerator || isGuestMode) {
         alert('У вас нет прав для добавления объявлений');
         return;
     }
@@ -369,7 +393,7 @@ document.getElementById('addListingForm').addEventListener('submit', async (e) =
 });
 
 function showModeratorsModal() {
-    if (!isAdmin) {
+    if (!isAdmin || isGuestMode) {
         alert('Только администратор может управлять модераторами');
         return;
     }
@@ -477,7 +501,7 @@ function renderNews() {
     }
     
     container.innerHTML = allPosts.map(post => {
-        const canDelete = isModerator;
+        const canDelete = isModerator && !isGuestMode;
         const date = post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString('ru-RU') : '';
         
         return `
@@ -498,7 +522,7 @@ async function addPost() {
         return;
     }
     
-    if (!isModerator) {
+    if (!isModerator || isGuestMode) {
         alert('У вас нет прав для публикации');
         return;
     }
@@ -517,7 +541,7 @@ async function addPost() {
 }
 
 async function deletePost(postId) {
-    if (!isModerator) return;
+    if (!isModerator || isGuestMode) return;
     if (!confirm('Удалить этот пост?')) return;
     
     try {
