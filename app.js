@@ -21,9 +21,22 @@ let currentUser = null;
 let isAdmin = false;
 let isModerator = false;
 let allListings = [];
-let moderators = [];
+let moderators = []; // Список email-ов модераторов (включая админа)
 
-// Tab switching
+// --- Helper Functions ---
+
+// Заменяем точки на запятые для использования в качестве ID документа в Firestore
+function getSafeEmailId(email) {
+    return email.replace(/\./g, ',');
+}
+
+// Проверка прав модератора по локальному списку
+function checkModeratorRights(email) {
+    return moderators.includes(email);
+}
+
+// --- UI & Navigation ---
+
 function showTab(tab) {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -42,12 +55,8 @@ function showTab(tab) {
     }
 }
 
-// Check if user has moderator rights
-function checkModeratorRights(email) {
-    return email === ADMIN_EMAIL || moderators.includes(email);
-}
+// --- Authentication ---
 
-// Auth state listener
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
@@ -58,6 +67,7 @@ auth.onAuthStateChanged((user) => {
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('userEmail').textContent = user.email;
         
+        // Показываем кнопки только если есть права
         if (isModerator) {
             document.getElementById('addListingBtn').classList.remove('hidden');
         }
@@ -77,7 +87,6 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// Login
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
@@ -95,7 +104,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Register
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('registerEmail').value;
@@ -113,17 +121,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     }
 });
 
-// Logout
 async function logout() {
     await auth.signOut();
 }
 
-// Error messages in Russian
 function getErrorMessage(code) {
     const errors = {
         'auth/email-already-in-use': 'Этот email уже зарегистрирован',
         'auth/invalid-email': 'Неверный формат email',
-        'auth/operation-not-allowed': 'Регистрация отключена. Включите Email/Password в Firebase Console → Authentication → Sign-in method',
+        'auth/operation-not-allowed': 'Регистрация отключена',
         'auth/weak-password': 'Пароль слишком слабый (минимум 6 символов)',
         'auth/user-disabled': 'Аккаунт заблокирован',
         'auth/user-not-found': 'Пользователь не найден. Сначала зарегистрируйтесь',
@@ -133,7 +139,8 @@ function getErrorMessage(code) {
     return errors[code] || 'Ошибка: ' + code;
 }
 
-// Load listings with real-time updates
+// --- Data Loading ---
+
 function loadListings() {
     db.collection('listings').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
         allListings = [];
@@ -147,18 +154,20 @@ function loadListings() {
     });
 }
 
-// Load moderators
 function loadModerators() {
     db.collection('moderators').onSnapshot((snapshot) => {
-        moderators = [ADMIN_EMAIL]; // Admin always has rights
+        // Админ всегда модератор
+        moderators = [ADMIN_EMAIL]; 
+        
         snapshot.forEach((doc) => {
             const data = doc.data();
+            // Добавляем в список, если его там еще нет
             if (!moderators.includes(data.email)) {
                 moderators.push(data.email);
             }
         });
         
-        // Update UI if needed
+        // Обновляем статус текущего пользователя, если он вошел
         if (currentUser) {
             isModerator = checkModeratorRights(currentUser.email);
             if (isModerator) {
@@ -168,7 +177,8 @@ function loadModerators() {
     });
 }
 
-// Filter and display listings
+// --- Filtering & Display ---
+
 function filterListings() {
     const categoryFilter = document.getElementById('categoryFilter').value;
     const priceFilter = document.getElementById('priceFilter').value;
@@ -176,17 +186,14 @@ function filterListings() {
     
     let filtered = allListings;
     
-    // Category filter
     if (categoryFilter) {
         filtered = filtered.filter(l => l.category === categoryFilter);
     }
     
-    // Status filter
     if (statusFilter) {
         filtered = filtered.filter(l => l.status === statusFilter);
     }
     
-    // Price filter
     if (priceFilter) {
         filtered = filtered.filter(l => {
             const price = parseFloat(l.price);
@@ -201,7 +208,6 @@ function filterListings() {
     displayListings(filtered);
 }
 
-// Display listings
 function displayListings(listings) {
     const container = document.getElementById('listingsContainer');
     
@@ -211,6 +217,7 @@ function displayListings(listings) {
     }
     
     container.innerHTML = listings.map(listing => {
+        // Обрезаем описание до 30 символов
         const shortDesc = listing.description.length > 30 
             ? listing.description.substring(0, 30) + '...' 
             : listing.description;
@@ -230,7 +237,8 @@ function displayListings(listings) {
     `}).join('');
 }
 
-// Show detail modal
+// --- Modals & Details ---
+
 function showDetail(listingId) {
     const listing = allListings.find(l => l.id === listingId);
     if (!listing) return;
@@ -254,7 +262,17 @@ function closeDetailModal() {
     document.getElementById('detailModal').classList.add('hidden');
 }
 
-// Delete listing
+function showAddModal() {
+    document.getElementById('addModal').classList.remove('hidden');
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+    document.getElementById('addListingForm').reset();
+}
+
+// --- Actions (Add/Delete) ---
+
 async function deleteListing(listingId) {
     if (!isModerator) {
         alert('У вас нет прав для удаления');
@@ -265,13 +283,130 @@ async function deleteListing(listingId) {
     
     try {
         await db.collection('listings').doc(listingId).delete();
-        alert('Объявление удалено');
+        // Уведомление не обязательно, так как onSnapshot обновит список автоматически
     } catch (error) {
         alert('Ошибка при удалении: ' + error.message);
     }
 }
 
-// Helper functions
+document.getElementById('addListingForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!isModerator) {
+        alert('У вас нет прав для добавления объявлений');
+        return;
+    }
+    
+    const listing = {
+        title: document.getElementById('listingTitle').value,
+        description: document.getElementById('listingDescription').value,
+        price: parseFloat(document.getElementById('listingPrice').value),
+        category: document.getElementById('listingCategory').value,
+        status: document.getElementById('listingStatus').value,
+        link: document.getElementById('listingLink').value,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        addedBy: currentUser.email
+    };
+    
+    try {
+        await db.collection('listings').add(listing);
+        closeAddModal();
+        alert('Объявление добавлено!');
+    } catch (error) {
+        console.error('Add listing error:', error);
+        alert('Ошибка при добавлении: ' + error.message);
+    }
+});
+
+// --- Moderators Management ---
+
+function showModeratorsModal() {
+    if (!isAdmin) {
+        alert('Только администратор может управлять модераторами');
+        return;
+    }
+    updateModeratorsList();
+    document.getElementById('moderatorsModal').classList.remove('hidden');
+}
+
+function closeModeratorsModal() {
+    document.getElementById('moderatorsModal').classList.add('hidden');
+    document.getElementById('moderatorEmail').value = '';
+}
+
+function updateModeratorsList() {
+    const list = document.getElementById('moderatorsList');
+    // Фильтруем админа из списка, чтобы не показывать кнопку "удалить" самому себе
+    const mods = moderators.filter(m => m !== ADMIN_EMAIL);
+    
+    if (mods.length === 0) {
+        list.innerHTML = '<p style="color: #7f8c8d;">Нет дополнительных модераторов</p>';
+        return;
+    }
+    
+    list.innerHTML = mods.map(email => `
+        <div class="moderator-item">
+            <span class="moderator-email">${email}</span>
+            <button class="remove-moderator-btn" onclick="removeModerator('${email}')">Убрать права</button>
+        </div>
+    `).join('');
+}
+
+async function addModerator() {
+    const emailInput = document.getElementById('moderatorEmail').value.trim();
+    
+    if (!emailInput) {
+        alert('Введите email');
+        return;
+    }
+
+    // ВАЖНО: Заменяем точки на запятые для ID документа
+    const safeId = emailInput.replace(/\./g, ','); 
+    
+    if (emailInput === ADMIN_EMAIL) {
+        alert('Администратор уже имеет все права');
+        return;
+    }
+    
+    if (moderators.includes(emailInput)) {
+        alert('Этот пользователь уже является модератором');
+        return;
+    }
+    
+    try {
+        // Используем safeId как ID документа
+        await db.collection('moderators').doc(safeId).set({
+            email: emailInput, // Настоящий email храним внутри поля
+            addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            addedBy: ADMIN_EMAIL
+        });
+        
+        alert('Права модератора выданы!');
+        document.getElementById('moderatorEmail').value = '';
+        updateModeratorsList();
+    } catch (error) {
+        console.error(error);
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function removeModerator(email) {
+    if (!confirm(`Убрать права модератора у ${email}?`)) return;
+    
+    // Снова заменяем точки на запятые для поиска ID
+    const safeId = email.replace(/\./g, ',');
+    
+    try {
+        await db.collection('moderators').doc(safeId).delete();
+        alert('Права убраны');
+        updateModeratorsList();
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+// --- Helpers ---
+
 function getCategoryName(category) {
     const categories = {
         'gaming-consoles': 'Игровые приставки',
@@ -311,138 +446,15 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Modal functions
-function showAddModal() {
-    document.getElementById('addModal').classList.remove('hidden');
-}
-
-function closeAddModal() {
-    document.getElementById('addModal').classList.add('hidden');
-    document.getElementById('addListingForm').reset();
-}
-
-// Add listing
-document.getElementById('addListingForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    if (!isModerator) {
-        alert('У вас нет прав для добавления объявлений');
-        return;
-    }
-    
-    const listing = {
-        title: document.getElementById('listingTitle').value,
-        description: document.getElementById('listingDescription').value,
-        price: parseFloat(document.getElementById('listingPrice').value),
-        category: document.getElementById('listingCategory').value,
-        status: document.getElementById('listingStatus').value,
-        link: document.getElementById('listingLink').value,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        addedBy: currentUser.email
-    };
-    
-    try {
-        await db.collection('listings').add(listing);
-        closeAddModal();
-        alert('Объявление добавлено!');
-    } catch (error) {
-        console.error('Add listing error:', error);
-        alert('Ошибка при добавлении: ' + error.message);
-    }
-});
-
-// Moderators functions
-function showModeratorsModal() {
-    if (!isAdmin) {
-        alert('Только администратор может управлять модераторами');
-        return;
-    }
-    updateModeratorsList();
-    document.getElementById('moderatorsModal').classList.remove('hidden');
-}
-
-function closeModeratorsModal() {
-    document.getElementById('moderatorsModal').classList.add('hidden');
-    document.getElementById('moderatorEmail').value = '';
-}
-
-function updateModeratorsList() {
-    const list = document.getElementById('moderatorsList');
-    const mods = moderators.filter(m => m !== ADMIN_EMAIL);
-    
-    if (mods.length === 0) {
-        list.innerHTML = '<p style="color: #7f8c8d;">Нет дополнительных модераторов</p>';
-        return;
-    }
-    
-    list.innerHTML = mods.map(email => `
-        <div class="moderator-item">
-            <span class="moderator-email">${email}</span>
-            <button class="remove-moderator-btn" onclick="removeModerator('${email}')">Убрать права</button>
-        </div>
-    `).join('');
-}
-
-async function addModerator() {
-    const email = document.getElementById('moderatorEmail').value.trim();
-    
-    if (!email) {
-        alert('Введите email');
-        return;
-    }
-    
-    if (email === ADMIN_EMAIL) {
-        alert('Администратор уже имеет все права');
-        return;
-    }
-    
-    if (moderators.includes(email)) {
-        alert('Этот пользователь уже является модератором');
-        return;
-    }
-    
-    try {
-        await db.collection('moderators').doc(email.replace(/[.#$/[\]]/g, '_')).set({
-            email: email,
-            addedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            addedBy: ADMIN_EMAIL
-        });
-        
-        alert('Права модератора выданы!');
-        document.getElementById('moderatorEmail').value = '';
-        updateModeratorsList();
-    } catch (error) {
-        alert('Ошибка: ' + error.message);
-    }
-}
-
-async function removeModerator(email) {
-    if (!confirm(`Убрать права модератора у ${email}?`)) return;
-    
-    try {
-        await db.collection('moderators').doc(email.replace(/[.#$/[\]]/g, '_')).delete();
-        alert('Права убраны');
-        updateModeratorsList();
-    } catch (error) {
-        alert('Ошибка: ' + error.message);
-    }
-}
-
 // Close modals on outside click
 document.getElementById('addModal').addEventListener('click', (e) => {
-    if (e.target.id === 'addModal') {
-        closeAddModal();
-    }
+    if (e.target.id === 'addModal') closeAddModal();
 });
 
 document.getElementById('detailModal').addEventListener('click', (e) => {
-    if (e.target.id === 'detailModal') {
-        closeDetailModal();
-    }
+    if (e.target.id === 'detailModal') closeDetailModal();
 });
 
 document.getElementById('moderatorsModal').addEventListener('click', (e) => {
-    if (e.target.id === 'moderatorsModal') {
-        closeModeratorsModal();
-    }
+    if (e.target.id === 'moderatorsModal') closeModeratorsModal();
 });
