@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassifiedsDetective - Найди лучшие предложения</title>
+    <title>ClassifiedsDetective</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Auth Screen -->
     <div id="authScreen" class="screen">
         <div class="auth-container">
             <h1>ClassifiedsDetective</h1>
@@ -34,7 +33,6 @@
         </div>
     </div>
 
-    <!-- Main App -->
     <div id="mainApp" class="screen hidden">
         <header>
             <div class="header-left">
@@ -49,10 +47,7 @@
             </div>
         </header>
 
-        <!-- Creator Credit -->
-        <div class="creator-credit">
-            Created by: maxfoxbetov@gmail.com
-        </div>
+        <div class="creator-credit">Created by: maxfoxbetov@gmail.com</div>
 
         <div class="info-banner">
             <strong>Как читать статусы:</strong>
@@ -87,12 +82,9 @@
             </select>
         </div>
 
-        <div id="listingsContainer" class="listings-grid">
-            <!-- Listings will be loaded here -->
-        </div>
+        <div id="listingsContainer" class="listings-grid"></div>
     </div>
 
-    <!-- Add Listing Modal -->
     <div id="addModal" class="modal hidden">
         <div class="modal-content">
             <h2>Добавить объявление</h2>
@@ -127,7 +119,6 @@
         </div>
     </div>
 
-    <!-- Listing Detail Modal -->
     <div id="detailModal" class="modal hidden">
         <div class="modal-content modal-large">
             <h2 id="detailTitle"></h2>
@@ -143,7 +134,6 @@
         </div>
     </div>
 
-    <!-- Moderators Modal -->
     <div id="moderatorsModal" class="modal hidden">
         <div class="modal-content">
             <h2>Управление модераторами</h2>
@@ -163,26 +153,21 @@
         </div>
     </div>
 
-    <!-- News Feed Modal -->
     <div id="newsModal" class="modal hidden">
         <div class="modal-content modal-large">
             <h2>📰 Новостная лента</h2>
             
-            <!-- Форма добавления поста (только для админов/модеров) -->
             <div id="addPostSection" class="hidden" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
                 <textarea id="postContent" placeholder="Напишите новость..." rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px;"></textarea>
                 <button onclick="addPost()" class="btn-primary">Опубликовать</button>
             </div>
 
-            <div id="newsFeedContainer" style="max-height: 400px; overflow-y: auto;">
-                <!-- Посты будут здесь -->
-            </div>
+            <div id="newsFeedContainer" style="max-height: 400px; overflow-y: auto;"></div>
 
             <button onclick="closeNewsModal()" class="btn-secondary" style="margin-top: 15px;">Закрыть</button>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
