@@ -14,7 +14,6 @@ body {
     display: none !important;
 }
 
-/* Auth Screen */
 .screen {
     min-height: 100vh;
 }
@@ -113,7 +112,6 @@ body {
     font-size: 14px;
 }
 
-/* Header */
 header {
     background: white;
     padding: 20px 40px;
@@ -171,7 +169,30 @@ header {
     background: #8e44ad;
 }
 
-/* Info Banner */
+.btn-news {
+    padding: 10px 20px;
+    background: #e67e22;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.btn-news:hover {
+    background: #d35400;
+}
+
+.creator-credit {
+    text-align: right;
+    padding: 5px 40px;
+    font-size: 10px;
+    color: #bdc3c7;
+    background: white;
+}
+
 .info-banner {
     background: white;
     padding: 15px 40px;
@@ -210,7 +231,6 @@ header {
     background: #e74c3c;
 }
 
-/* Filters */
 .filters {
     padding: 0 40px;
     margin-bottom: 20px;
@@ -229,7 +249,6 @@ header {
     min-width: 200px;
 }
 
-/* Listings Grid */
 .listings-grid {
     padding: 0 40px 40px;
     display: grid;
@@ -341,7 +360,6 @@ header {
     color: #2980b9;
 }
 
-/* Modal */
 .modal {
     position: fixed;
     top: 0;
@@ -406,7 +424,6 @@ header {
     margin-top: 10px;
 }
 
-/* Detail Modal */
 .detail-description {
     font-size: 16px;
     line-height: 1.6;
@@ -429,7 +446,6 @@ header {
     font-size: 14px;
 }
 
-/* Moderators Modal */
 .add-moderator-section {
     margin-bottom: 25px;
     padding-bottom: 20px;
@@ -485,73 +501,6 @@ header {
     background: #c0392b;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    header {
-        padding: 15px 20px;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .info-banner {
-        margin: 15px 20px;
-        padding: 15px 20px;
-    }
-
-    .filters {
-        padding: 0 20px;
-    }
-
-    .listings-grid {
-        padding: 0 20px 20px;
-        grid-template-columns: 1fr;
-    }
-
-    .auth-container {
-        margin: 50px 20px;
-        padding: 30px 20px;
-    }
-}
-
-/* ... (предыдущие стили остаются без изменений до .header-right) ... */
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-#userEmail {
-    color: #7f8c8d;
-    font-size: 14px;
-}
-
-.btn-news {
-    padding: 10px 20px;
-    background: #e67e22;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: background 0.3s;
-}
-
-.btn-news:hover {
-    background: #d35400;
-}
-
-/* Creator Credit */
-.creator-credit {
-    text-align: right;
-    padding: 5px 40px;
-    font-size: 10px;
-    color: #bdc3c7;
-    background: white;
-}
-
-/* News Feed Styles */
 .news-post {
     background: #f8f9fa;
     padding: 15px;
@@ -596,4 +545,47 @@ header {
     color: #c0392b;
 }
 
-/* ... (остальные стили остаются без изменений) ... */
+@media (max-width: 768px) {
+    header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .header-right {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .creator-credit {
+        padding: 5px 20px;
+    }
+
+    .info-banner {
+        margin: 15px 20px;
+        padding: 15px 20px;
+    }
+
+    .filters {
+        padding: 0 20px;
+    }
+
+    .filters select {
+        min-width: 100%;
+    }
+
+    .listings-grid {
+        padding: 0 20px 20px;
+        grid-template-columns: 1fr;
+    }
+
+    .auth-container {
+        margin: 50px 20px;
+        padding: 30px 20px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+}
