@@ -19,7 +19,9 @@ const ADMIN_EMAIL = "maxfoxbetov@gmail.com";
 
 let currentUser = null;
 let isAdmin = false;
+let isModerator = false;
 let allListings = [];
+let moderators = [];
 
 // Tab switching
 function showTab(tab) {
@@ -40,24 +42,36 @@ function showTab(tab) {
     }
 }
 
+// Check if user has moderator rights
+function checkModeratorRights(email) {
+    return email === ADMIN_EMAIL || moderators.includes(email);
+}
+
 // Auth state listener
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
         isAdmin = user.email === ADMIN_EMAIL;
+        isModerator = checkModeratorRights(user.email);
         
         document.getElementById('authScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('userEmail').textContent = user.email;
         
-        if (isAdmin) {
+        if (isModerator) {
             document.getElementById('addListingBtn').classList.remove('hidden');
         }
         
+        if (isAdmin) {
+            document.getElementById('moderatorsBtn').classList.remove('hidden');
+        }
+        
         loadListings();
+        loadModerators();
     } else {
         currentUser = null;
         isAdmin = false;
+        isModerator = false;
         document.getElementById('authScreen').classList.remove('hidden');
         document.getElementById('mainApp').classList.add('hidden');
     }
@@ -133,6 +147,27 @@ function loadListings() {
     });
 }
 
+// Load moderators
+function loadModerators() {
+    db.collection('moderators').onSnapshot((snapshot) => {
+        moderators = [ADMIN_EMAIL]; // Admin always has rights
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (!moderators.includes(data.email)) {
+                moderators.push(data.email);
+            }
+        });
+        
+        // Update UI if needed
+        if (currentUser) {
+            isModerator = checkModeratorRights(currentUser.email);
+            if (isModerator) {
+                document.getElementById('addListingBtn').classList.remove('hidden');
+            }
+        }
+    });
+}
+
 // Filter and display listings
 function filterListings() {
     const categoryFilter = document.getElementById('categoryFilter').value;
@@ -175,16 +210,65 @@ function displayListings(listings) {
         return;
     }
     
-    container.innerHTML = listings.map(listing => `
-        <div class="listing-card">
+    container.innerHTML = listings.map(listing => {
+        const shortDesc = listing.description.length > 30 
+            ? listing.description.substring(0, 30) + '...' 
+            : listing.description;
+        
+        const canDelete = isModerator;
+        
+        return `
+        <div class="listing-card" onclick="showDetail('${listing.id}')">
+            ${canDelete ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteListing('${listing.id}')">×</button>` : ''}
             <div class="listing-status ${listing.status}"></div>
             <span class="listing-category">${getCategoryName(listing.category)}</span>
             <h3 class="listing-title">${escapeHtml(listing.title)}</h3>
-            <p class="listing-description">${escapeHtml(listing.description)}</p>
+            <p class="listing-description">${escapeHtml(shortDesc)}</p>
             <div class="listing-price">${formatPrice(listing.price)} ₽</div>
-            <a href="${escapeHtml(listing.link)}" target="_blank" class="listing-link">Перейти к объявлению</a>
+            ${listing.description.length > 30 ? '<span class="read-more">Подробнее →</span>' : ''}
         </div>
-    `).join('');
+    `}).join('');
+}
+
+// Show detail modal
+function showDetail(listingId) {
+    const listing = allListings.find(l => l.id === listingId);
+    if (!listing) return;
+    
+    document.getElementById('detailTitle').textContent = listing.title;
+    document.getElementById('detailCategory').textContent = getCategoryName(listing.category);
+    document.getElementById('detailDescription').textContent = listing.description;
+    document.getElementById('detailPrice').textContent = formatPrice(listing.price) + ' ₽';
+    document.getElementById('detailLink').href = listing.link;
+    
+    const statusDot = document.getElementById('detailStatusDot');
+    const statusText = document.getElementById('detailStatusText');
+    statusDot.className = 'dot';
+    statusDot.style.background = getStatusColor(listing.status);
+    statusText.textContent = getStatusText(listing.status);
+    
+    document.getElementById('detailModal').classList.remove('hidden');
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').classList.add('hidden');
+}
+
+// Delete listing
+async function deleteListing(listingId) {
+    if (!isModerator) {
+        alert('У вас нет прав для удаления');
+        return;
+    }
+    
+    if (!confirm('Удалить это объявление?')) return;
+    
+    try {
+        await db.collection('listings').doc(listingId).delete();
+        alert('Объявление удалено');
+    } catch (error) {
+        alert('Ошибка при удалении: ' + error.message);
+    }
 }
 
 // Helper functions
@@ -197,6 +281,24 @@ function getCategoryName(category) {
         'games': 'Покупка игр'
     };
     return categories[category] || category;
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'normal': '#27ae60',
+        'suspicious': '#f39c12',
+        'strange': '#e74c3c'
+    };
+    return colors[status] || '#999';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'normal': 'Обычное предложение',
+        'suspicious': 'Сомнительное',
+        'strange': 'Странное предложение'
+    };
+    return texts[status] || status;
 }
 
 function formatPrice(price) {
@@ -223,8 +325,8 @@ function closeAddModal() {
 document.getElementById('addListingForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    if (!isAdmin) {
-        alert('Только администратор может добавлять объявления');
+    if (!isModerator) {
+        alert('У вас нет прав для добавления объявлений');
         return;
     }
     
@@ -249,9 +351,98 @@ document.getElementById('addListingForm').addEventListener('submit', async (e) =
     }
 });
 
-// Close modal on outside click
+// Moderators functions
+function showModeratorsModal() {
+    if (!isAdmin) {
+        alert('Только администратор может управлять модераторами');
+        return;
+    }
+    updateModeratorsList();
+    document.getElementById('moderatorsModal').classList.remove('hidden');
+}
+
+function closeModeratorsModal() {
+    document.getElementById('moderatorsModal').classList.add('hidden');
+    document.getElementById('moderatorEmail').value = '';
+}
+
+function updateModeratorsList() {
+    const list = document.getElementById('moderatorsList');
+    const mods = moderators.filter(m => m !== ADMIN_EMAIL);
+    
+    if (mods.length === 0) {
+        list.innerHTML = '<p style="color: #7f8c8d;">Нет дополнительных модераторов</p>';
+        return;
+    }
+    
+    list.innerHTML = mods.map(email => `
+        <div class="moderator-item">
+            <span class="moderator-email">${email}</span>
+            <button class="remove-moderator-btn" onclick="removeModerator('${email}')">Убрать права</button>
+        </div>
+    `).join('');
+}
+
+async function addModerator() {
+    const email = document.getElementById('moderatorEmail').value.trim();
+    
+    if (!email) {
+        alert('Введите email');
+        return;
+    }
+    
+    if (email === ADMIN_EMAIL) {
+        alert('Администратор уже имеет все права');
+        return;
+    }
+    
+    if (moderators.includes(email)) {
+        alert('Этот пользователь уже является модератором');
+        return;
+    }
+    
+    try {
+        await db.collection('moderators').doc(email.replace(/[.#$/[\]]/g, '_')).set({
+            email: email,
+            addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            addedBy: ADMIN_EMAIL
+        });
+        
+        alert('Права модератора выданы!');
+        document.getElementById('moderatorEmail').value = '';
+        updateModeratorsList();
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function removeModerator(email) {
+    if (!confirm(`Убрать права модератора у ${email}?`)) return;
+    
+    try {
+        await db.collection('moderators').doc(email.replace(/[.#$/[\]]/g, '_')).delete();
+        alert('Права убраны');
+        updateModeratorsList();
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+// Close modals on outside click
 document.getElementById('addModal').addEventListener('click', (e) => {
     if (e.target.id === 'addModal') {
         closeAddModal();
+    }
+});
+
+document.getElementById('detailModal').addEventListener('click', (e) => {
+    if (e.target.id === 'detailModal') {
+        closeDetailModal();
+    }
+});
+
+document.getElementById('moderatorsModal').addEventListener('click', (e) => {
+    if (e.target.id === 'moderatorsModal') {
+        closeModeratorsModal();
     }
 });
