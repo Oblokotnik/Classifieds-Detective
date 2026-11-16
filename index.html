@@ -7,7 +7,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="authScreen" class="screen">
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content modal-large">
+            <h2>Добро пожаловать в ClassifiedsDetective!</h2>
+            <p style="margin-bottom: 15px; line-height: 1.6;">
+                Наш сервис создан для поиска качественных и дешевых товаров на маркетплейсах вроде Авито, а также цифровых товаров на площадках типа Playerok и FunPay. 
+                Мы вручную отбираем самые выгодные и надежные предложения из тысяч объявлений, чтобы вы могли покупать лучшее по минимальной цене — абсолютно бесплатно.
+            </p>
+            <p style="margin-bottom: 20px; line-height: 1.6;">
+                Полный исходный код проекта открыт и доступен на GitHub. Если у вас есть идеи по улучшению сайта или предложения о сотрудничестве, пишите нам на почту, указанную в шапке сайта.
+            </p>
+            <button onclick="closeWelcomeModal()" class="btn-primary" style="width: 100%;">Понятно, начать поиск</button>
+        </div>
+    </div>
+
+    <div id="authScreen" class="screen hidden">
         <div class="auth-container">
             <h1>ClassifiedsDetective</h1>
             <p>Найди лучшие предложения специально для тебя</p>
@@ -30,6 +44,7 @@
             </form>
 
             <div id="authError" class="error-message"></div>
+            <button onclick="closeAuthAndBrowse()" class="btn-secondary" style="margin-top: 15px; width: 100%;">Продолжить без регистрации</button>
         </div>
     </div>
 
@@ -39,11 +54,14 @@
                 <h1>ClassifiedsDetective</h1>
             </div>
             <div class="header-right">
-                <span id="userEmail"></span>
-                <button id="newsBtn" class="btn-news" onclick="showNewsModal()">📰 Новости</button>
+                <span id="userEmail" class="hidden"></span>
+                <button id="themeToggle" class="btn-icon" onclick="toggleTheme()">🌙</button>
+                <button id="authorsBtn" class="btn-authors" onclick="showAuthorsModal()">© Авторы</button>
+                <button id="newsBtn" class="btn-news hidden" onclick="showNewsModal()">📰 Новости</button>
                 <button id="addListingBtn" class="btn-add hidden" onclick="showAddModal()">+ Добавить</button>
                 <button id="moderatorsBtn" class="btn-moderators hidden" onclick="showModeratorsModal()">👥 Модераторы</button>
-                <button onclick="logout()" class="btn-secondary">Выйти</button>
+                <button id="authBtn" class="btn-primary" onclick="showAuthScreen()">Вход / Регистрация</button>
+                <button id="logoutBtn" class="btn-secondary hidden" onclick="logout()">Выйти</button>
             </div>
         </header>
 
@@ -157,14 +175,33 @@
         <div class="modal-content modal-large">
             <h2>📰 Новостная лента</h2>
             
-            <div id="addPostSection" class="hidden" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-                <textarea id="postContent" placeholder="Напишите новость..." rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px;"></textarea>
+            <div id="newsGuestMessage" class="hidden" style="text-align: center; padding: 40px; color: #7f8c8d;">
+                Авторизуйтесь, чтобы видеть новостную ленту и получать актуальные обновления
+            </div>
+
+            <div id="addPostSection" class="hidden" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                <textarea id="postContent" placeholder="Напишите новость..." rows="3" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 10px; background: var(--bg-input); color: var(--text-color);"></textarea>
                 <button onclick="addPost()" class="btn-primary">Опубликовать</button>
             </div>
 
             <div id="newsFeedContainer" style="max-height: 400px; overflow-y: auto;"></div>
 
             <button onclick="closeNewsModal()" class="btn-secondary" style="margin-top: 15px;">Закрыть</button>
+        </div>
+    </div>
+
+    <div id="authorsModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Команда проекта</h2>
+            <div class="author-item">
+                <span class="author-role">CEO / Автор / Кодер</span>
+                <span class="author-name">safere27, Keny</span>
+            </div>
+            <div class="author-item">
+                <span class="author-role">Соавтор</span>
+                <span class="author-name">Манiпулятор</span>
+            </div>
+            <button onclick="closeAuthorsModal()" class="btn-secondary" style="margin-top: 20px; width: 100%;">Закрыть</button>
         </div>
     </div>
 
